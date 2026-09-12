@@ -1,0 +1,30 @@
+{
+    "example_skill": {
+        "description": "This skill demonstrates how to create documentation.",
+        "parameters": {
+            "param1": "type1",
+            "param2": "type2"
+        },
+        "examples": {
+            "example1": "example usage"
+        },
+        "purpose": "To provide an example of skill creation and documentation.",
+        "created_at": "2026-08-08T23:08:53.961502"
+    },
+    "sumar": {
+        "description": "Suma dos n\u00fameros.",
+        "parameters": {
+            "a": "float",
+            "b": "float"
+        },
+        "examples": {
+            "input": {
+                "a": 1,
+                "b": 2
+            },
+            "output": 3
+        },
+        "notes": "Aseg\u00farate de que 'a' y 'b' sean n\u00fameros.",
+        "created_at": "2026-08-09T12:27:01.564701"
+    }
+}

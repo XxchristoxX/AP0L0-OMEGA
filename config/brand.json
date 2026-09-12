@@ -1,0 +1,16 @@
+{
+  "assistant_name": "AP0L0",
+  "assistant_title": "Autonomous Platform for Orchestration, Learning and Operations",
+  "wake_phrases": ["apolo", "jarvis", "asistente", "hey apolo"],
+  "primary_color": "#00ff88",
+  "secondary_color": "#00d4ff",
+  "accent_color": "#ff8800",
+  "warning_color": "#ff2244",
+  "logo_path": "face.png",
+  "footer_text": "By XxchristoxX",
+  "default_voice": "Charon",
+  "default_personality": "apolo",
+  "default_theme": "#00ff88",
+  "enable_animations": true,
+  "enable_sounds": true
+}

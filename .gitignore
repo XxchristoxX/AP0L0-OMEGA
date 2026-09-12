@@ -1,0 +1,172 @@
+# ============================================================
+#  .gitignore — AP0L0 OMEGA
+#  Excluye credenciales, tokens, claves y archivos temporales
+# ============================================================
+
+# ── Credenciales y secretos ──────────────────────────────────
+.env
+.env.*
+!.env.example
+*.env
+credentials.json
+credentials*.json
+token.pickle
+token.json
+tokens.json
+api_keys.json
+api_key.json
+apikeys.json
+secrets.json
+secret.json
+master_key.txt
+masterkey.txt
+*.pem
+*.key
+*.pfx
+*.p12
+*.crt
+*.cer
+config/credentials.json
+config/api_keys.json
+config/master_key.txt
+src/config/credentials.json
+src/config/api_keys.json
+src/dashboard/config/master_key.txt
+src/dashboard/config/password.txt
+**/credentials.json
+**/api_keys.json
+**/master_key.txt
+**/token.pickle
+**/*_secret.py
+**/*_credentials.py
+
+# ── Claves API específicas de servicios ─────────────────────
+*_api_key.txt
+*_token.txt
+*_secret.txt
+gemini_key.txt
+openai_key.txt
+anthropic_key.txt
+grok_key.txt
+xai_key.txt
+mistral_key.txt
+serpapi_key.txt
+youtube_key.txt
+telegram_token.txt
+discord_token.txt
+
+# ── Datos personales y configuración local ──────────────────
+jarvis_config.json
+jarvis_memoire.json
+jarvis_conversations.json
+jarvis_model_config.json
+recent_projects.json
+user_data.json
+personal_data.json
+backup.json
+preferences.json
+*.local.json
+
+# ── Entornos virtuales ──────────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+virtualenv/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# ── Caché de Python ─────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ── Modelos grandes (Vosk, etc.) ────────────────────────────
+models/vosk-model-*/
+models/*.nemo
+models/*.bin
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.gguf
+
+# ── Audio y archivos multimedia generados ───────────────────
+audio/*.mp3
+audio/*.wav
+audio/*.ogg
+*.mp3
+*.wav
+*.ogg
+*.mp4
+*.avi
+
+# ── Imágenes generadas / capturas temporales ────────────────
+Imagenes/*.jpg
+Imagenes/*.png
+jarvis_vision_temp.png
+jarvis_camera_temp.jpg
+jarvis_rap_*.mp3
+jarvis_music_*.mp3
+
+# ── Logs y datos temporales ─────────────────────────────────
+*.log
+logs/
+data/activity_log.txt
+data/ap0lo_log.txt
+data/ideas/
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# ── IDE y editores ──────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+
+# ── Sistema operativo ───────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ── Aider y herramientas IA ─────────────────────────────────
+.aider*
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache/
+
+# ── Archivos de debug temporal ──────────────────────────────
+DEBUG_ALIVE.txt
+CRASH_LOG.txt
+reponse_ia_brute.txt
+tree_*.txt
+*.copia
+*- copia.*
+* - copia.*
+
+# ── Node.js (por si acaso) ──────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Jupyter ─────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Obsidian vault (datos privados) ─────────────────────────
+ObsidianVault/
+*.md.bak

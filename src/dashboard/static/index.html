@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AP0L0 · OMEGA HUD</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a12;
+            color: #00d4ff;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            padding: 12px;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(0,212,255,0.05) 0%, transparent 60%);
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #010d14; }
+        ::-webkit-scrollbar-thumb { background: #0d3347; border-radius: 2px; }
+        .container { max-width: 1600px; margin: 0 auto; }
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 24px; background: rgba(1,13,20,0.85);
+            border: 1px solid #0d3347; border-radius: 12px;
+            margin-bottom: 14px; backdrop-filter: blur(10px);
+        }
+        .header h1 { color: #00d4ff; font-size: 24px; letter-spacing: 3px; }
+        .header h1 span { color: #3a8a9a; font-size: 14px; }
+        .status { display: flex; align-items: center; gap: 16px; }
+        .badge { padding: 4px 14px; border-radius: 20px; font-size: 10px; font-weight: bold; border: 1px solid; }
+        .badge.online { color: #00ff88; border-color: #00aa55; background: #001a08; }
+        .badge.offline { color: #ff3355; border-color: #aa2244; background: #1a0008; }
+        .btn {
+            background: transparent; color: #3a8a9a; border: 1px solid #0d3347;
+            border-radius: 6px; padding: 6px 14px; cursor: pointer;
+            font-family: 'Courier New', monospace; font-size: 10px;
+            text-transform: uppercase; letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover { color: #00d4ff; border-color: #00d4ff; }
+        .btn.primary { background: #00d4ff; color: #000; border: none; padding: 8px 20px; font-size: 12px; }
+        .btn.primary:hover { background: #00ff88; }
+        .tabs {
+            display: flex; gap: 2px; margin-bottom: 14px;
+            background: rgba(1,13,20,0.85); padding: 4px 8px;
+            border-radius: 10px; border: 1px solid #0d3347;
+            overflow-x: auto;
+        }
+        .tab {
+            background: transparent; color: #1a4a5a; border: none;
+            padding: 8px 18px; cursor: pointer; font-family: 'Courier New', monospace;
+            font-size: 11px; border-bottom: 2px solid transparent;
+            transition: all 0.3s ease; white-space: nowrap;
+        }
+        .tab:hover { color: #3a8a9a; }
+        .tab.active { color: #00d4ff; border-bottom-color: #00d4ff; }
+        .content { display: none; animation: fadeIn 0.4s ease; }
+        .content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+        .card {
+            background: rgba(1,13,20,0.85); border: 1px solid #0d3347;
+            border-radius: 10px; padding: 14px 16px;
+            backdrop-filter: blur(8px);
+        }
+        .card .title { color: #3a8a9a; font-size: 9px; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #0d3347; padding-bottom: 4px; margin-bottom: 8px; }
+        .card .metric { font-size: 26px; font-weight: bold; color: #00d4ff; }
+        .card .sub { color: #1a4a5a; font-size: 10px; }
+        .log-container { background: #000d14; border: 1px solid #0d3347; border-radius: 6px; height: 280px; overflow-y: auto; padding: 8px; font-size: 11px; }
+        .log-entry { padding: 2px 0; border-bottom: 1px solid rgba(13,51,71,0.3); display: flex; gap: 8px; }
+        .log-time { color: #1a4a5a; min-width: 60px; }
+        .log-user { color: #8ffcff; }
+        .log-ai { color: #00d4ff; }
+        .log-sys { color: #ffcc00; }
+        .log-err { color: #ff3355; }
+        .input-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .input-row input, .input-row textarea { flex: 1; background: #000d14; color: #8ffcff; border: 1px solid #0d3347; border-radius: 4px; padding: 8px 12px; outline: none; font-family: 'Courier New', monospace; font-size: 12px; min-width: 60px; }
+        .input-row input:focus, .input-row textarea:focus { border-color: #00d4ff; }
+        .chat-container { background: #000d14; border: 1px solid #0d3347; border-radius: 6px; height: 280px; overflow-y: auto; padding: 10px; font-size: 12px; display: flex; flex-direction: column; }
+        .chat-msg { margin-bottom: 6px; padding: 6px 12px; border-radius: 8px; max-width: 80%; }
+        .chat-user { align-self: flex-end; background: rgba(0,212,255,0.12); color: #8ffcff; }
+        .chat-ai { align-self: flex-start; background: rgba(0,255,136,0.08); color: #00ff88; }
+        .chat-sys { align-self: center; background: rgba(255,204,0,0.06); color: #ffcc00; font-style: italic; }
+        .orbe-container { display: flex; justify-content: center; align-items: center; padding: 20px; position: relative; }
+        #orbeCanvas { width: 300px; height: 300px; }
+        .result-box { background: #000d14; border: 1px solid #0d3347; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 12px; max-height: 150px; overflow-y: auto; white-space: pre-wrap; border-left: 3px solid #00d4ff; }
+        .personality-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 6px; }
+        .personality-grid button { padding: 8px; border-radius: 6px; border: 1px solid #0d3347; background: #000d14; color: #1a4a5a; cursor: pointer; font-family: 'Courier New', monospace; transition: all 0.3s; font-size: 11px; }
+        .personality-grid button:hover { border-color: #00d4ff; color: #8ffcff; }
+        .personality-grid button.active { border-color: #00d4ff; background: rgba(0,212,255,0.08); color: #00d4ff; }
+        .login-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,6,10,0.95); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(10px); }
+        .login-overlay.active { display: flex; }
+        .login-box { background: rgba(1,13,20,0.85); border: 1px solid #0d3347; border-radius: 16px; padding: 40px 50px; max-width: 400px; width: 90%; box-shadow: 0 0 60px rgba(0,212,255,0.05); }
+        .login-box h2 { color: #00d4ff; margin-bottom: 10px; }
+        .login-box p { color: #3a8a9a; margin-bottom: 16px; }
+        .login-box input { width: 100%; background: #000d14; color: #8ffcff; border: 1px solid #0d3347; border-radius: 4px; padding: 10px 14px; font-size: 18px; letter-spacing: 6px; text-align: center; outline: none; margin-bottom: 14px; }
+        .login-box input:focus { border-color: #00d4ff; }
+        .login-box button { width: 100%; background: #00d4ff; color: #000; border: none; border-radius: 4px; padding: 10px; font-weight: bold; font-size: 14px; cursor: pointer; }
+        .login-box button:hover { background: #00ff88; }
+        .login-box .error { color: #ff3355; font-size: 12px; margin-top: 8px; min-height: 18px; }
+        .util-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+        .util-btn { background: #000d14; border: 1px solid #0d3347; color: #3a8a9a; padding: 12px 8px; border-radius: 8px; cursor: pointer; font-family: 'Courier New', monospace; font-size: 11px; transition: all 0.3s; text-align: center; min-height: 50px; display: flex; align-items: center; justify-content: center; }
+        .util-btn:hover { border-color: #00d4ff; color: #00d4ff; background: rgba(0,212,255,0.08); transform: translateY(-2px); box-shadow: 0 0 20px rgba(0,212,255,0.05); }
+        .util-btn.system { border-color: #ff3355; color: #ff3355; }
+        .util-btn.system:hover { background: rgba(255,51,85,0.08); }
+        .util-btn.app { border-color: #ffcc00; color: #ffcc00; }
+        .util-btn.app:hover { background: rgba(255,204,0,0.08); }
+        .util-btn.media { border-color: #00ff88; color: #00ff88; }
+        .util-btn.media:hover { background: rgba(0,255,136,0.08); }
+        .mic-error { color: #ffcc00; background: rgba(255,204,0,0.1); border: 1px solid #ffcc00; border-radius: 6px; padding: 8px; margin-top: 6px; font-size: 11px; display: none; }
+        @media (max-width: 768px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } .util-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>◈ AP0L0 <span>OMEGA</span></h1>
+        <div class="status">
+            <button class="btn" onclick="toggleTheme()">🌓 Tema</button>
+            <span class="badge online" id="statusBadge"><span id="statusText">Conectado</span></span>
+            <span style="color:#1a4a5a;font-size:10px;" id="clientCount">0</span>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="orbe">🔮 ORBE</button>
+        <button class="tab" data-tab="tools">🔧 UTILIDADES</button>
+        <button class="tab" data-tab="logs">📜 LOGS</button>
+    </div>
+
+    <!-- ORBE + ASISTENTE -->
+    <div id="tab-orbe" class="content active">
+        <div class="card">
+            <div class="title">🔮 NÚCLEO HOLOGRÁFICO</div>
+            <div class="orbe-container">
+                <canvas id="orbeCanvas" width="300" height="300"></canvas>
+                <div style="position:absolute; bottom:10px; left:0; right:0; text-align:center; color:#1a4a5a; font-size:12px;" id="orbeStatus">Estado: Inactivo</div>
+            </div>
+            <div class="grid-3" style="margin-top:10px;">
+                <div><span class="sub">CPU</span><br><span id="hudCpu" style="color:#00d4ff;">--%</span></div>
+                <div><span class="sub">RAM</span><br><span id="hudRam" style="color:#00d4ff;">--%</span></div>
+                <div><span class="sub">UPTIME</span><br><span id="hudUptime" style="color:#00d4ff;">--</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="title">💬 ASISTENTE</div>
+            <div class="chat-container" id="chatContainer">
+                <div class="chat-msg chat-sys">🤖 AP0L0 listo. Escribe o habla.</div>
+            </div>
+            <div class="input-row">
+                <input id="aiPrompt" placeholder="Mensaje..." />
+                <button class="btn primary" onclick="askAI()">Enviar</button>
+                <button class="btn" onclick="clearChat()">🗑</button>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                <button class="btn" id="recordBtn" onclick="toggleRecording()">🎤 Grabar</button>
+                <button class="btn" onclick="playLastAudio()">🔊 Reproducir</button>
+                <span id="recordingStatus" style="font-size:10px;color:#1a4a5a;"></span>
+            </div>
+            <div id="micError" class="mic-error">
+                ⚠️ No se pudo acceder al micrófono. Asegúrate de:
+                <ul style="margin:4px 0 0 16px;">
+                    <li>Usar <strong>localhost</strong> o <strong>HTTPS</strong></li>
+                    <li>Conceder permisos de micrófono en el navegador</li>
+                    <li>Usar Chrome, Edge o Firefox (no Safari)</li>
+                </ul>
+            </div>
+            <div class="personality-grid" style="margin-top:10px;">
+                <button onclick="changePersonality('jarvis')" id="p-jarvis">Jarvis</button>
+                <button onclick="changePersonality('agata')" id="p-agata">Ágata</button>
+                <button onclick="changePersonality('tony')" id="p-tony">Tony</button>
+                <button onclick="changePersonality('friday')" id="p-friday">Friday</button>
+                <button onclick="changePersonality('apolo')" id="p-apolo">Apolo</button>
+            </div>
+            <div style="margin-top:6px;color:#1a4a5a;font-size:10px;" id="personalityDisplay">Actual: Jarvis</div>
+        </div>
+    </div>
+
+    <!-- UTILIDADES -->
+    <div id="tab-tools" class="content">
+        <div class="card">
+            <div class="title">⚡ ACCIONES RÁPIDAS</div>
+            <div class="util-grid">
+                <button class="util-btn app" onclick="openApp('word')">📝 Word</button>
+                <button class="util-btn app" onclick="openApp('excel')">📊 Excel</button>
+                <button class="util-btn app" onclick="openApp('powerpoint')">📽️ PowerPoint</button>
+                <button class="util-btn app" onclick="openApp('calculadora')">🧮 Calculadora</button>
+                <button class="util-btn app" onclick="openApp('bloc de notas')">📄 Notepad</button>
+                <button class="util-btn app" onclick="openApp('explorador')">📁 Explorador</button>
+                <button class="util-btn app" onclick="openApp('cmd')">💻 Terminal</button>
+                <button class="util-btn app" onclick="openApp('chrome')">🌐 Chrome</button>
+                <button class="util-btn app" onclick="openApp('youtube')">▶️ YouTube</button>
+                <button class="util-btn app" onclick="openApp('google')">🔍 Google</button>
+                <button class="util-btn media" onclick="setVolume(0)">🔇 Vol 0%</button>
+                <button class="util-btn media" onclick="setVolume(50)">🔉 Vol 50%</button>
+                <button class="util-btn media" onclick="setVolume(100)">🔊 Vol 100%</button>
+                <button class="util-btn media" onclick="toggleMute()">🔇 Mute</button>
+                <button class="util-btn media" onclick="setBrightness(30)">🌙 Brillo 30%</button>
+                <button class="util-btn media" onclick="setBrightness(70)">☀️ Brillo 70%</button>
+                <button class="util-btn media" onclick="controlMedia('playpause')">⏯️ Play/Pause</button>
+                <button class="util-btn media" onclick="controlMedia('next')">⏭️ Siguiente</button>
+                <button class="util-btn media" onclick="controlMedia('previous')">⏮️ Anterior</button>
+                <button class="util-btn" onclick="takeScreenshot()">📸 Captura</button>
+                <button class="util-btn" onclick="lockScreen()">🔒 Bloquear</button>
+                <button class="util-btn system" onclick="systemAction('shutdown')">⏻ Apagar</button>
+                <button class="util-btn system" onclick="systemAction('restart')">🔄 Reiniciar</button>
+                <button class="util-btn system" onclick="systemAction('sleep')">💤 Suspender</button>
+                <button class="util-btn system" onclick="systemAction('hibernate')">⏳ Hibernar</button>
+                <button class="util-btn" onclick="getClipboard()">📋 Leer Clipboard</button>
+                <button class="util-btn" onclick="setClipboard('AP0L0 RULES!')">📋 Escribir</button>
+                <button class="util-btn" onclick="getWifi()">📶 WiFi</button>
+                <button class="util-btn" onclick="getBluetooth()">🔵 Bluetooth</button>
+                <button class="util-btn" onclick="getWeather()">🌤️ Clima</button>
+                <button class="util-btn" onclick="getNews()">📰 Noticias</button>
+                <button class="util-btn" onclick="wikipediaSearch()">📚 Wikipedia</button>
+                <button class="util-btn" onclick="webSearch()">🌐 Buscar Web</button>
+                <button class="util-btn" onclick="calculate()">🧮 Calculadora</button>
+                <button class="util-btn" onclick="fetchBtc()">💰 Bitcoin</button>
+                <button class="util-btn" onclick="fetchCrypto('ethereum')">💎 Ethereum</button>
+                <button class="util-btn" onclick="fetchQuote()">📝 Cita</button>
+                <button class="util-btn" onclick="generatePassword()">🔐 Password</button>
+                <button class="util-btn" onclick="fetchSystemInfo()">🖥️ Sistema</button>
+                <button class="util-btn" onclick="searchRecipes()">🍳 Recetas</button>
+                <button class="util-btn" onclick="addReminder()">⏰ Recordatorio</button>
+                <button class="util-btn" onclick="listReminders()">📋 Listar Record.</button>
+                <button class="util-btn" onclick="addNote()">📝 Nueva Nota</button>
+                <button class="util-btn" onclick="listNotes()">📋 Listar Notas</button>
+            </div>
+        </div>
+        <div class="card">
+            <div class="title">📊 RESULTADOS</div>
+            <div id="toolResult" class="result-box" style="display:none;">Aquí aparecerán los resultados.</div>
+        </div>
+    </div>
+
+    <!-- LOGS -->
+    <div id="tab-logs" class="content">
+        <div class="card">
+            <div class="title">📜 REGISTRO</div>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry"><span class="log-time">[--:--]</span><span class="log-sys">🚀 Iniciado</span></div>
+            </div>
+            <div class="input-row">
+                <input id="cmdInput" placeholder="Comando rápido..." />
+                <button class="btn primary" onclick="sendCommand()">▸</button>
+                <button class="btn" onclick="clearLogs()">🗑</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay active" id="loginOverlay">
+    <div class="login-box">
+        <h2>🔐 AP0L0</h2>
+        <p>Introduce el PIN de 6 dígitos.</p>
+        <input type="text" id="pinInput" maxlength="6" placeholder="123456" autofocus>
+        <button onclick="login()">CONECTAR</button>
+        <div class="error" id="loginError"></div>
+    </div>
+</div>
+
+<script>
+// =====================================================================
+// AUTENTICACIÓN
+// =====================================================================
+let authToken = sessionStorage.getItem('jarvis_token') || '';
+if (authToken) { document.getElementById('loginOverlay').classList.remove('active'); }
+
+function login() {
+    const pin = document.getElementById('pinInput').value.trim().toUpperCase();
+    if (!pin || pin.length < 4) { document.getElementById('loginError').textContent = 'Código inválido.'; return; }
+    fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: pin }) })
+    .then(r => r.json()).then(data => {
+        if (data.ok) {
+            authToken = data.token; sessionStorage.setItem('jarvis_token', authToken);
+            document.getElementById('loginOverlay').classList.remove('active');
+            connectWebSocket();
+        } else { document.getElementById('loginError').textContent = 'Código inválido o expirado.'; }
+    }).catch(e => document.getElementById('loginError').textContent = 'Error: ' + e);
+}
+
+// =====================================================================
+// WEBSOCKET
+// =====================================================================
+let ws = null;
+function connectWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${protocol}//${location.host}/ws?token=${authToken}`);
+    ws.onopen = function() {
+        document.getElementById('statusBadge').className = 'badge online';
+        document.getElementById('statusText').textContent = 'Conectado';
+        addLog('sys', '🔗 Conectado');
+        fetchSystem();
+        initOrbe();
+    };
+    ws.onclose = function() { document.getElementById('statusBadge').className = 'badge offline'; document.getElementById('statusText').textContent = 'Desconectado'; setTimeout(connectWebSocket, 3000); };
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        if (data.type === 'log') addLog(data.speaker, data.text);
+        else if (data.type === 'response') addChatMessage('ai', data.text);
+        else if (data.type === 'audio_response') {
+            addChatMessage('ai', data.text || '(audio)');
+            if (data.audio) playBase64Audio(data.audio);
+        }
+    };
+}
+
+// =====================================================================
+// ORBE 3D
+// =====================================================================
+let orbeState = 'idle';
+let orbeCanvas, orbeCtx;
+let particles = [];
+
+function initOrbe() {
+    orbeCanvas = document.getElementById('orbeCanvas');
+    orbeCtx = orbeCanvas.getContext('2d');
+    for(let i=0; i<80; i++) {
+        particles.push({
+            x: Math.random() * 300,
+            y: Math.random() * 300,
+            r: Math.random() * 2 + 1,
+            dx: (Math.random() - 0.5) * 0.5,
+            dy: (Math.random() - 0.5) * 0.5,
+            color: `hsl(190, 100%, ${60 + Math.random()*30}%)`
+        });
+    }
+    requestAnimationFrame(drawOrbe);
+    fetchSystem();
+}
+
+function drawOrbe() {
+    if (!orbeCtx) return;
+    const canvas = orbeCanvas, ctx = orbeCtx;
+    const w = canvas.width, h = canvas.height;
+    const cx = w/2, cy = h/2, radius = 80;
+    const time = Date.now() / 1000;
+    let color, glowColor;
+    switch(orbeState) {
+        case 'idle': color = '#00d4ff'; glowColor = 'rgba(0,212,255,0.3)'; break;
+        case 'listening': color = '#ff3355'; glowColor = 'rgba(255,51,85,0.3)'; break;
+        case 'thinking': color = '#ffcc00'; glowColor = 'rgba(255,204,0,0.3)'; break;
+        case 'speaking': color = '#00ff88'; glowColor = 'rgba(0,255,136,0.3)'; break;
+    }
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => {
+        p.x += p.dx; p.y += p.dy;
+        if(p.x < 0 || p.x > w) p.dx *= -1;
+        if(p.y < 0 || p.y > h) p.dy *= -1;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fillStyle = p.color; ctx.fill();
+    });
+    for (let i = 0; i < 3; i++) {
+        const r = radius + ((time * 40 + i * 40) % 100);
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+        ctx.strokeStyle = glowColor; ctx.lineWidth = 1 + i; ctx.stroke();
+    }
+    const pulse = 0.2 * Math.sin(time * 3) + 0.8;
+    const grad = ctx.createRadialGradient(cx, cy, radius*0.1, cx, cy, radius);
+    grad.addColorStop(0, color); grad.addColorStop(1, 'rgba(0,0,0,0.1)');
+    ctx.beginPath(); ctx.arc(cx, cy, radius * pulse, 0, Math.PI*2);
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, radius * 1.2, time*0.5, time*0.5 + Math.PI*1.5);
+    ctx.strokeStyle = glowColor; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = color; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'center';
+    ctx.fillText(orbeState.toUpperCase(), cx, cy + 5);
+    requestAnimationFrame(drawOrbe);
+}
+
+function setOrbeState(state) {
+    orbeState = state;
+    document.getElementById('orbeStatus').textContent = 'Estado: ' + state.charAt(0).toUpperCase() + state.slice(1);
+}
+
+// =====================================================================
+// ASISTENTE (CHAT + VOZ)
+// =====================================================================
+let lastAudioBase64 = null;
+
+function askAI() {
+    const prompt = document.getElementById('aiPrompt').value.trim();
+    if (!prompt) return;
+    document.getElementById('aiPrompt').value = '';
+    addChatMessage('user', prompt);
+    setOrbeState('thinking');
+    fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }, body: JSON.stringify({ prompt: prompt }) })
+    .then(r => r.json()).then(data => {
+        const reply = data.response || 'No se pudo obtener respuesta.';
+        addChatMessage('ai', reply);
+        setOrbeState('speaking'); setTimeout(() => setOrbeState('idle'), 3000);
+        synthesizeSpeech(reply);
+    }).catch(e => { addChatMessage('sys', 'Error: ' + e); setOrbeState('idle'); });
+}
+
+function synthesizeSpeech(text) {
+    if (!text) return;
+    fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }, body: JSON.stringify({ text: text }) })
+    .then(r => r.json()).then(data => {
+        if (data.audio_base64) { lastAudioBase64 = data.audio_base64; playBase64Audio(data.audio_base64); }
+    }).catch(e => console.error('TTS error:', e));
+}
+
+function playBase64Audio(b64) {
+    const audio = new Audio('data:audio/mpeg;base64,' + b64);
+    audio.play().catch(e => console.error('Play error:', e));
+}
+
+function playLastAudio() { if (lastAudioBase64) playBase64Audio(lastAudioBase64); }
+
+// ===== MICRÓFONO MEJORADO =====
+let mediaRecorder = null, audioChunks = [], isRecording = false;
+
+async function toggleRecording() {
+    if (isRecording) { stopRecording(); return; }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        document.getElementById('micError').style.display = 'block';
+        document.getElementById('micError').innerHTML = '⚠️ Tu navegador no soporta getUserMedia. Usa Chrome, Edge o Firefox.';
+        return;
+    }
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        document.getElementById('micError').style.display = 'none';
+        startRecording(stream);
+    } catch (err) {
+        console.error('Mic error:', err);
+        document.getElementById('micError').style.display = 'block';
+        document.getElementById('micError').innerHTML = '⚠️ Error: ' + err.message + '. Asegúrate de usar localhost o HTTPS.';
+        setOrbeState('idle');
+    }
+}
+
+function startRecording(stream) {
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    setOrbeState('listening');
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = async () => {
+        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+        if (blob.size > 100) {
+            await sendVoice(blob);
+        } else {
+            addChatMessage('sys', 'Audio demasiado corto. Intenta hablar más tiempo.');
+            setOrbeState('idle');
+        }
+        stream.getTracks().forEach(t => t.stop());
+    };
+    mediaRecorder.start();
+    isRecording = true;
+    document.getElementById('recordBtn').textContent = '⏹ Detener';
+    document.getElementById('recordingStatus').textContent = '🎙 Grabando...';
+    addChatMessage('sys', 'Grabando...');
+}
+
+function stopRecording() {
+    if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+        document.getElementById('recordBtn').textContent = '🎤 Grabar';
+        document.getElementById('recordingStatus').textContent = '';
+        setOrbeState('thinking');
+    }
+}
+
+async function sendVoice(blob) {
+    const formData = new FormData();
+    formData.append('file', blob, 'audio.webm');
+    try {
+        const response = await fetch('/api/voice', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + authToken },
+            body: formData
+        });
+        const data = await response.json();
+        if (data.transcript) {
+            addChatMessage('user', data.transcript);
+            if (data.response) {
+                addChatMessage('ai', data.response);
+                setOrbeState('speaking'); setTimeout(() => setOrbeState('idle'), 3000);
+                if (data.audio_base64) { lastAudioBase64 = data.audio_base64; playBase64Audio(data.audio_base64); }
+            }
+        } else {
+            addChatMessage('sys', 'No se pudo transcribir el audio: ' + (data.error || ''));
+            setOrbeState('idle');
+        }
+    } catch (e) {
+        addChatMessage('sys', 'Error al enviar audio: ' + e);
+        setOrbeState('idle');
+    }
+}
+
+function addChatMessage(type, text) {
+    const container = document.getElementById('chatContainer');
+    const div = document.createElement('div'); div.className = 'chat-msg chat-' + type; div.textContent = text;
+    container.appendChild(div); container.scrollTop = container.scrollHeight;
+}
+function clearChat() { document.getElementById('chatContainer').innerHTML = '<div class="chat-msg chat-sys">🤖 AP0L0 listo.</div>'; }
+
+function changePersonality(p) {
+    fetch('/api/personality', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }, body: JSON.stringify({ personality: p }) })
+    .then(r => r.json()).then(data => {
+        if (data.status === 'ok') {
+            addLog('sys', '🧠 Cambiando a ' + p);
+            document.querySelectorAll('.personality-grid button').forEach(b => b.classList.remove('active'));
+            document.getElementById('p-' + p).classList.add('active');
+            document.getElementById('personalityDisplay').textContent = 'Actual: ' + p.charAt(0).toUpperCase() + p.slice(1);
+        }
+    }).catch(e => addLog('err', 'Error: ' + e));
+}
+
+// =====================================================================
+// LOGS
+// =====================================================================
+function addLog(speaker, text) {
+    const container = document.getElementById('logContainer');
+    const entry = document.createElement('div'); entry.className = 'log-entry';
+    const time = new Date().toLocaleTimeString();
+    const cls = { 'user':'log-user', 'ai':'log-ai', 'sys':'log-sys', 'err':'log-err' }[speaker] || 'log-sys';
+    entry.innerHTML = `<span class="log-time">[${time}]</span><span class="${cls}">${speaker}: ${text}</span>`;
+    container.appendChild(entry); container.scrollTop = container.scrollHeight;
+}
+function clearLogs() { document.getElementById('logContainer').innerHTML = ''; addLog('sys', '📋 Logs limpiados'); }
+function sendCommand() {
+    const text = document.getElementById('cmdInput').value.trim(); if (!text) return;
+    document.getElementById('cmdInput').value = ''; addLog('user', text);
+    fetch('/command', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }, body: JSON.stringify({ text: text }) }).catch(e => addLog('err', 'Error: ' + e));
+}
+
+// =====================================================================
+// SISTEMA
+// =====================================================================
+function fetchSystem() {
+    if (!authToken) return;
+    fetch('/api/system', { headers: { 'Authorization': 'Bearer ' + authToken } })
+    .then(r => r.json()).then(data => {
+        if (data.cpu !== undefined) {
+            document.getElementById('hudCpu').textContent = data.cpu.toFixed(1) + '%';
+            document.getElementById('hudRam').textContent = data.ram.toFixed(1) + '%';
+            document.getElementById('hudUptime').textContent = data.uptime || '--';
+        }
+    }).catch(() => {});
+}
+
+// =====================================================================
+// UTILIDADES
+// =====================================================================
+function showResult(text, error=false) {
+    const div = document.getElementById('toolResult');
+    div.style.display = 'block';
+    div.textContent = text;
+    div.className = 'result-box' + (error ? ' error' : '');
+}
+
+function apiCall(method, url, body=null, callback) {
+    const opts = { method, headers: { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    fetch(url, opts).then(r => r.json()).then(data => { if (callback) callback(data); else showResult(JSON.stringify(data, null, 2)); }).catch(e => showResult('Error: ' + e, true));
+}
+
+function openApp(app) { apiCall('POST', '/api/open', { app }, d => showResult(d.result || 'Error')); }
+function openWebsite(url) { apiCall('POST', '/api/openurl', { url }, d => showResult(d.result || 'Error')); }
+function systemAction(action) { if(!confirm('¿Estás seguro de ejecutar '+action+'?')) return; apiCall('POST', '/api/system/action', { action }, d => showResult(d.result || 'Error')); }
+function lockScreen() { apiCall('POST', '/api/lock', null, d => showResult(d.result || 'Error')); }
+function takeScreenshot() { apiCall('GET', '/api/screenshot', null, d => { if(d.image_base64) { const w = window.open(''); w.document.write('<img src="data:image/png;base64,'+d.image_base64+'" style="max-width:100%">'); } else showResult('Error: ' + d.error); }); }
+function setVolume(v) { apiCall('POST', '/api/volume', { volume: v }, d => showResult('Volumen: '+d.volume+'%')); }
+function toggleMute() { apiCall('POST', '/api/volume/toggle', null, d => showResult('Mute toggled')); }
+function setBrightness(l) { apiCall('POST', '/api/brightness', { level: l }, d => showResult(d.result || 'Error')); }
+function controlMedia(a) { apiCall('POST', '/api/media', { action: a }, d => showResult(d.result || 'Error')); }
+function getClipboard() { apiCall('GET', '/api/clipboard', null, d => showResult('Clipboard: ' + (d.text || 'Vacío'))); }
+function setClipboard(t) { apiCall('POST', '/api/clipboard', { text: t }, d => showResult('Copiado')); }
+function getWifi() { apiCall('GET', '/api/wifi', null, d => showResult(d.result || 'Error')); }
+function getBluetooth() { apiCall('GET', '/api/bluetooth', null, d => showResult(d.result || 'Error')); }
+function getWeather() { const city = prompt('Ciudad:', 'Madrid'); if(city) apiCall('GET', `/api/weather?city=${encodeURIComponent(city)}`, null, d => showResult(d.result || 'Error')); }
+function getNews() { const cat = prompt('Categoría:', 'tecnologia'); if(cat) apiCall('POST', '/api/news', { category: cat }, d => showResult(d.result || 'Error')); }
+function wikipediaSearch() { const q = prompt('Buscar en Wikipedia:'); if(q) apiCall('POST', '/api/wikipedia', { query: q }, d => showResult(d.result || 'Error')); }
+function webSearch() { const q = prompt('Buscar en Web:'); if(q) apiCall('POST', '/api/websearch', { query: q }, d => showResult(d.result || 'Error')); }
+function calculate() { const expr = prompt('Expresión:'); if(expr) apiCall('POST', '/api/calculate', { expression: expr }, d => showResult(d.result || 'Error')); }
+function fetchBtc() { apiCall('GET', '/api/btc', null, d => showResult(d.result || 'Error')); }
+function fetchCrypto(c) { apiCall('GET', `/api/crypto?coin=${c}`, null, d => showResult(d.result || 'Error')); }
+function fetchQuote() { apiCall('GET', '/api/quote', null, d => showResult(d.result || 'Error')); }
+function generatePassword() { apiCall('GET', '/api/password', null, d => showResult('Contraseña: ' + (d.password || 'Error'))); }
+function fetchSystemInfo() { apiCall('GET', '/api/systeminfo', null, d => showResult(d.result || 'Error')); }
+function searchRecipes() { const q = prompt('Receta:'); if(q) apiCall('POST', '/api/recipes', { query: q }, d => showResult(d.result || 'Error')); }
+function addReminder() { const t = prompt('Recordatorio:'); if(!t) return; const m = parseInt(prompt('Minutos:', '5')) || 5; apiCall('POST', '/api/reminders', { text: t, minutes: m }, d => showResult(d.result || 'Error')); }
+function listReminders() { apiCall('GET', '/api/reminders', null, d => showResult(d.reminders || 'No hay recordatorios')); }
+function addNote() { const title = prompt('Título:'); if(!title) return; const content = prompt('Contenido:'); if(!content) return; apiCall('POST', '/api/notes', { title, content }, d => showResult(d.result || 'Error')); }
+function listNotes() { apiCall('GET', '/api/notes', null, d => showResult(d.notes || 'No hay notas')); }
+
+// =====================================================================
+// TEMA Y TABS
+// =====================================================================
+function toggleTheme() {
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+}
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+        if(this.dataset.tab === 'orbe') fetchSystem();
+    });
+});
+
+// =====================================================================
+// EVENTOS
+// =====================================================================
+document.getElementById('aiPrompt').addEventListener('keypress', e => { if (e.key === 'Enter') askAI(); });
+document.getElementById('cmdInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendCommand(); });
+
+// =====================================================================
+// INICIO
+// =====================================================================
+if (authToken) { connectWebSocket(); } else { document.getElementById('loginOverlay').classList.add('active'); }
+setInterval(() => { if (authToken) fetchSystem(); }, 5000);
+</script>
+</body>
+</html>

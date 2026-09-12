@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AP0L0 Dashboard</title>
+    <style>
+        /* Estilos modernos */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0e1a;
+            color: #c8d6e5;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        nav {
+            background: #111827;
+            padding: 0.8rem 2rem;
+            display: flex;
+            gap: 1.5rem;
+            border-bottom: 1px solid #1e293b;
+            flex-wrap: wrap;
+        }
+        nav button {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+        nav button:hover { background: #1e293b; color: #f1f5f9; }
+        nav button.active { background: #2563eb; color: white; }
+        #status-bar {
+            background: #0f172a;
+            padding: 0.4rem 2rem;
+            font-size: 0.8rem;
+            color: #64748b;
+            border-bottom: 1px solid #1e293b;
+            display: flex;
+            justify-content: space-between;
+        }
+        #panels {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem 2rem;
+        }
+        .panel {
+            display: none;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+        .panel.active { display: flex; }
+        .card {
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 1.2rem;
+        }
+        .card h3 { color: #60a5fa; margin-bottom: 0.8rem; font-weight: 500; }
+        .row { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; }
+        input, select {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            color: #e2e8f0;
+            padding: 0.5rem 0.8rem;
+            border-radius: 6px;
+            flex: 1;
+            min-width: 150px;
+        }
+        button {
+            background: #2563eb;
+            border: none;
+            color: white;
+            padding: 0.5rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        button:hover { background: #1d4ed8; }
+        button.secondary { background: #334155; }
+        button.secondary:hover { background: #475569; }
+        .result {
+            background: #0f172a;
+            padding: 0.8rem;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+            border: 1px solid #1e293b;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .log-area {
+            background: #0a0e1a;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            padding: 0.8rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        .log-area .user { color: #60a5fa; }
+        .log-area .jarvis { color: #34d399; }
+        .log-area .system { color: #fbbf24; }
+        @media (max-width: 700px) {
+            nav { flex-direction: column; align-items: stretch; }
+            .row { flex-direction: column; align-items: stretch; }
+            input { min-width: auto; }
+        }
+    </style>
+</head>
+<body>
+    <nav id="nav-tabs">
+        <button class="active" data-panel="system">Sistema</button>
+        <button data-panel="media">Multimedia</button>
+        <button data-panel="utilities">Utilidades</button>
+        <button data-panel="files">Archivos</button>
+        <button data-panel="advanced">Avanzado</button>
+        <button data-panel="logs">Logs</button>
+    </nav>
+    <div id="status-bar">
+        <span id="connection-status">🔴 Conectando...</span>
+        <span id="token-info">Token: ---</span>
+    </div>
+    <div id="panels">
+        <!-- Panel Sistema -->
+        <div id="panel-system" class="panel active">
+            <div class="card">
+                <h3>Estado del Sistema</h3>
+                <div id="system-info" class="result">Cargando...</div>
+                <button onclick="getSystemStatus()">Actualizar</button>
+            </div>
+            <div class="card">
+                <h3>Control de Spotify</h3>
+                <div class="row">
+                    <input id="spotify-query" placeholder="Canción o artista...">
+                    <button onclick="spotifyAction('play')">▶ Reproducir</button>
+                    <button onclick="spotifyAction('pause')">⏸ Pausar</button>
+                    <button onclick="spotifyAction('next')">⏭ Siguiente</button>
+                    <button onclick="spotifyAction('previous')">⏮ Anterior</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>YouTube</h3>
+                <div class="row">
+                    <input id="youtube-query" placeholder="Buscar...">
+                    <button onclick="youtubeSearch()">Buscar y reproducir</button>
+                </div>
+                <div class="row" style="margin-top:0.5rem">
+                    <input id="youtube-url" placeholder="URL para descargar...">
+                    <button onclick="youtubeDownload()">Descargar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Multimedia -->
+        <div id="panel-media" class="panel">
+            <div class="card">
+                <h3>Cambiar Wallpaper</h3>
+                <div class="row">
+                    <input id="wallpaper-path" placeholder="Ruta de la imagen...">
+                    <button onclick="changeWallpaper()">Aplicar</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Noticias</h3>
+                <div class="row">
+                    <select id="news-category">
+                        <option value="technology">Tecnología</option>
+                        <option value="sports">Deportes</option>
+                        <option value="politics">Política</option>
+                        <option value="economy">Economía</option>
+                        <option value="science">Ciencia</option>
+                        <option value="health">Salud</option>
+                        <option value="entertainment">Entretenimiento</option>
+                    </select>
+                    <button onclick="getNews()">Obtener Noticias</button>
+                </div>
+                <div id="news-result" class="result"></div>
+            </div>
+            <div class="card">
+                <h3>Podcasts</h3>
+                <div class="row">
+                    <input id="podcast-query" placeholder="Tema...">
+                    <button onclick="searchPodcast()">Buscar</button>
+                </div>
+                <div id="podcast-result" class="result"></div>
+            </div>
+        </div>
+
+        <!-- Panel Utilidades -->
+        <div id="panel-utilities" class="panel">
+            <div class="card">
+                <h3>Traducción</h3>
+                <div class="row">
+                    <input id="translate-text" placeholder="Texto a traducir...">
+                    <select id="translate-lang">
+                        <option value="Spanish">Español</option>
+                        <option value="English">Inglés</option>
+                        <option value="French">Francés</option>
+                        <option value="German">Alemán</option>
+                        <option value="Italian">Italiano</option>
+                        <option value="Portuguese">Portugués</option>
+                        <option value="Chinese">Chino</option>
+                        <option value="Japanese">Japonés</option>
+                        <option value="Russian">Ruso</option>
+                        <option value="Arabic">Árabe</option>
+                        <option value="Turkish">Turco</option>
+                    </select>
+                    <button onclick="translateText()">Traducir</button>
+                </div>
+                <div id="translate-result" class="result"></div>
+            </div>
+            <div class="card">
+                <h3>Corrector Ortográfico</h3>
+                <div class="row">
+                    <input id="spell-text" placeholder="Texto a corregir...">
+                    <button onclick="spellCheck()">Corregir</button>
+                </div>
+                <div id="spell-result" class="result"></div>
+            </div>
+            <div class="card">
+                <h3>Recetas</h3>
+                <div class="row">
+                    <input id="recipe-query" placeholder="Plato o ingrediente...">
+                    <button onclick="searchRecipes()">Buscar</button>
+                </div>
+                <div id="recipe-result" class="result"></div>
+            </div>
+            <div class="card">
+                <h3>Correo Electrónico</h3>
+                <div class="row">
+                    <input id="email-to" placeholder="Destinatario">
+                    <input id="email-subject" placeholder="Asunto">
+                </div>
+                <textarea id="email-body" placeholder="Mensaje..." rows="3" style="width:100%;background:#0f172a;border:1px solid #1e293b;color:white;padding:0.5rem;border-radius:6px;"></textarea>
+                <button onclick="sendEmail()" style="margin-top:0.5rem">Enviar Correo</button>
+                <div id="email-result" class="result"></div>
+            </div>
+        </div>
+
+        <!-- Panel Archivos -->
+        <div id="panel-files" class="panel">
+            <div class="card">
+                <h3>Respaldo</h3>
+                <div class="row">
+                    <input id="backup-source" placeholder="Carpeta o archivo origen...">
+                    <input id="backup-dest" placeholder="Destino (opcional)">
+                    <button onclick="runBackup()">Ejecutar Respaldo</button>
+                </div>
+                <div id="backup-result" class="result"></div>
+            </div>
+            <div class="card">
+                <h3>Subir Archivo</h3>
+                <input type="file" id="file-input" multiple>
+                <button onclick="uploadFile()">Subir</button>
+                <div id="upload-result" class="result"></div>
+            </div>
+            <div class="card">
+                <h3>Archivos Subidos</h3>
+                <button onclick="listUploadedFiles()">Listar</button>
+                <div id="files-list" class="result"></div>
+            </div>
+        </div>
+
+        <!-- Panel Avanzado -->
+        <div id="panel-advanced" class="panel">
+            <div class="card">
+                <h3>Detección de Objetos</h3>
+                <div class="row">
+                    <input id="detect-image" placeholder="Ruta de imagen...">
+                    <button onclick="detectObjects()">Detectar</button>
+                </div>
+                <div id="detect-result" class="result"></div>
+            </div>
+            <div class="card">
+                <h3>Edición de Imagen</h3>
+                <div class="row">
+                    <input id="edit-image-path" placeholder="Ruta de imagen...">
+                    <select id="edit-filter">
+                        <option value="blur">Desenfocar</option>
+                        <option value="sharpen">Enfocar</option>
+                        <option value="edge">Bordes</option>
+                        <option value="emboss">Relieve</option>
+                        <option value="smooth">Suavizar</option>
+                    </select>
+                    <button onclick="editImage()">Aplicar Filtro</button>
+                </div>
+                <div id="edit-result" class="result"></div>
+            </div>
+            <div class="card">
+                <h3>Análisis de Emociones</h3>
+                <div class="row">
+                    <input id="emotion-image" placeholder="Ruta de imagen con rostro...">
+                    <button onclick="analyzeEmotion()">Analizar</button>
+                </div>
+                <div id="emotion-result" class="result"></div>
+            </div>
+            <div class="card">
+                <h3>Recomendaciones</h3>
+                <div class="row">
+                    <select id="rec-type">
+                        <option value="movie">Películas</option>
+                        <option value="music">Música</option>
+                        <option value="book">Libros</option>
+                    </select>
+                    <input id="rec-genre" placeholder="Género (opcional)">
+                    <button onclick="getRecommendation()">Recomendar</button>
+                </div>
+                <div id="rec-result" class="result"></div>
+            </div>
+            <div class="card">
+                <h3>Calendario</h3>
+                <div class="row">
+                    <select id="cal-action">
+                        <option value="upcoming">Próximos eventos</option>
+                        <option value="today">Eventos de hoy</option>
+                        <option value="add">Añadir evento</option>
+                    </select>
+                    <input id="cal-title" placeholder="Título (para añadir)">
+                    <input id="cal-datetime" placeholder="YYYY-MM-DDTHH:MM">
+                    <button onclick="calendarAction()">Ejecutar</button>
+                </div>
+                <div id="cal-result" class="result"></div>
+            </div>
+            <div class="card">
+                <h3>IoT</h3>
+                <div class="row">
+                    <input id="iot-device" placeholder="Dispositivo (ej. luz_salon)">
+                    <input id="iot-action" placeholder="Acción (on/off/toggle)">
+                    <button onclick="iotControl()">Enviar</button>
+                </div>
+                <div id="iot-result" class="result"></div>
+            </div>
+        </div>
+
+        <!-- Panel Logs -->
+        <div id="panel-logs" class="panel">
+            <div class="card">
+                <h3>Logs en tiempo real</h3>
+                <div id="log-container" class="log-area">
+                    <div class="system">Conectando al WebSocket...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuración ---
+        const WS_URL = `ws://${window.location.hostname}:${window.location.port}/ws?token=${sessionStorage.getItem('jarvis_token') || ''}`;
+        let ws = null;
+        let token = sessionStorage.getItem('jarvis_token') || '';
+
+        // --- WebSocket ---
+        function connectWS() {
+            if (!token) {
+                document.getElementById('connection-status').textContent = '🔴 No autenticado';
+                return;
+            }
+            ws = new WebSocket(WS_URL);
+            ws.onopen = () => {
+                document.getElementById('connection-status').textContent = '🟢 Conectado';
+                document.getElementById('connection-status').style.color = '#34d399';
+            };
+            ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (data.type === 'log') {
+                    appendLog(data);
+                } else if (data.type === 'sys') {
+                    appendLog({ speaker: 'system', text: data.text });
+                }
+            };
+            ws.onclose = () => {
+                document.getElementById('connection-status').textContent = '🔴 Desconectado';
+                document.getElementById('connection-status').style.color = '#f87171';
+                setTimeout(connectWS, 3000);
+            };
+        }
+
+        function appendLog(entry) {
+            const container = document.getElementById('log-container');
+            const div = document.createElement('div');
+            const speaker = entry.speaker || 'system';
+            div.className = speaker;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${speaker.toUpperCase()}: ${entry.text}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // --- Autenticación ---
+        if (!token) {
+            // Redirigir a login si no hay token
+            window.location.href = '/login';
+        } else {
+            document.getElementById('token-info').textContent = `Token: ${token.substring(0,8)}...`;
+            connectWS();
+            // Obtener estado del sistema al cargar
+            getSystemStatus();
+        }
+
+        // --- Funciones de API ---
+        async function callAPI(endpoint, method = 'POST', data = null) {
+            const options = {
+                method,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+            if (data) options.body = JSON.stringify(data);
+            const response = await fetch(endpoint, options);
+            if (response.status === 401) {
+                alert('Sesión expirada. Redirigiendo a login.');
+                window.location.href = '/login';
+                return null;
+            }
+            return await response.json();
+        }
+
+        function displayResult(id, data) {
+            const el = document.getElementById(id);
+            if (data.error) {
+                el.textContent = '❌ Error: ' + data.error;
+                el.style.color = '#f87171';
+            } else if (data.result) {
+                el.textContent = data.result;
+                el.style.color = '#c8d6e5';
+            } else {
+                el.textContent = 'Sin respuesta.';
+            }
+        }
+
+        // --- Navegación por pestañas ---
+        document.querySelectorAll('#nav-tabs button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#nav-tabs button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+            });
+        });
+
+        // --- Sistema ---
+        async function getSystemStatus() {
+            const data = await callAPI('/api/system', 'GET');
+            if (data) {
+                const info = document.getElementById('system-info');
+                if (data.error) {
+                    info.textContent = 'Error: ' + data.error;
+                } else {
+                    info.textContent = `CPU: ${data.cpu_percent || 0}% | RAM: ${data.ram_percent || 0}% | GPU: ${data.gpu_percent || 'N/A'}% | Temp: ${data.cpu_temp_c || 'N/A'}°C | Uptime: ${data.uptime || '--'}`;
+                }
+            }
+        }
+
+        // --- Spotify ---
+        async function spotifyAction(action) {
+            const query = document.getElementById('spotify-query').value;
+            const data = await callAPI('/api/spotify', 'POST', { action, query });
+            displayResult('system-info', data);
+        }
+
+        // --- YouTube ---
+        async function youtubeSearch() {
+            const query = document.getElementById('youtube-query').value;
+            if (!query) return alert('Ingresa una búsqueda');
+            const data = await callAPI('/api/youtube/search', 'POST', { query });
+            displayResult('system-info', data);
+        }
+
+        async function youtubeDownload() {
+            const url = document.getElementById('youtube-url').value;
+            if (!url) return alert('Ingresa una URL');
+            const data = await callAPI('/api/youtube/download', 'POST', { url });
+            displayResult('system-info', data);
+        }
+
+        // --- Wallpaper ---
+        async function changeWallpaper() {
+            const path = document.getElementById('wallpaper-path').value;
+            if (!path) return alert('Ingresa la ruta de la imagen');
+            const data = await callAPI('/api/wallpaper', 'POST', { path });
+            displayResult('system-info', data);
+        }
+
+        // --- Noticias ---
+        async function getNews() {
+            const category = document.getElementById('news-category').value;
+            const data = await callAPI('/api/news?category=' + category, 'GET');
+            displayResult('news-result', data);
+        }
+
+        // --- Podcasts ---
+        async function searchPodcast() {
+            const query = document.getElementById('podcast-query').value;
+            if (!query) return alert('Ingresa un tema');
+            const data = await callAPI('/api/podcast', 'POST', { query });
+            displayResult('podcast-result', data);
+        }
+
+        // --- Traducción ---
+        async function translateText() {
+            const text = document.getElementById('translate-text').value;
+            const target_lang = document.getElementById('translate-lang').value;
+            if (!text) return alert('Ingresa texto');
+            const data = await callAPI('/api/translate', 'POST', { text, target_lang });
+            displayResult('translate-result', data);
+        }
+
+        // --- Corrector ---
+        async function spellCheck() {
+            const text = document.getElementById('spell-text').value;
+            if (!text) return alert('Ingresa texto');
+            const data = await callAPI('/api/spellcheck', 'POST', { text });
+            displayResult('spell-result', data);
+        }
+
+        // --- Recetas ---
+        async function searchRecipes() {
+            const query = document.getElementById('recipe-query').value;
+            if (!query) return alert('Ingresa un plato o ingrediente');
+            const data = await callAPI('/api/recipes', 'POST', { query });
+            displayResult('recipe-result', data);
+        }
+
+        // --- Email ---
+        async function sendEmail() {
+            const to = document.getElementById('email-to').value;
+            const subject = document.getElementById('email-subject').value;
+            const body = document.getElementById('email-body').value;
+            if (!to || !subject || !body) return alert('Completa todos los campos');
+            const data = await callAPI('/api/email', 'POST', { to, subject, message: body });
+            displayResult('email-result', data);
+        }
+
+        // --- Backup ---
+        async function runBackup() {
+            const source = document.getElementById('backup-source').value;
+            const destination = document.getElementById('backup-dest').value;
+            if (!source) return alert('Ingresa la ruta origen');
+            const data = await callAPI('/api/backup', 'POST', { source, destination });
+            displayResult('backup-result', data);
+        }
+
+        // --- Upload ---
+        async function uploadFile() {
+            const input = document.getElementById('file-input');
+            if (!input.files.length) return alert('Selecciona archivo(s)');
+            const formData = new FormData();
+            for (let f of input.files) formData.append('file', f);
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const data = await response.json();
+            displayResult('upload-result', data);
+        }
+
+        async function listUploadedFiles() {
+            const data = await callAPI('/api/files', 'GET');
+            if (data.files) {
+                const list = data.files.map(f => `${f.name} (${(f.size/1024).toFixed(1)} KB)`).join('\n');
+                document.getElementById('files-list').textContent = list || 'No hay archivos.';
+            } else {
+                document.getElementById('files-list').textContent = 'Error al listar.';
+            }
+        }
+
+        // --- Detección de objetos ---
+        async function detectObjects() {
+            const image_path = document.getElementById('detect-image').value;
+            if (!image_path) return alert('Ingresa ruta de imagen');
+            const data = await callAPI('/api/detect', 'POST', { image_path });
+            displayResult('detect-result', data);
+        }
+
+        // --- Edición de imagen ---
+        async function editImage() {
+            const image_path = document.getElementById('edit-image-path').value;
+            const filter = document.getElementById('edit-filter').value;
+            if (!image_path) return alert('Ingresa ruta de imagen');
+            const data = await callAPI('/api/image/edit', 'POST', { image_path, filter });
+            displayResult('edit-result', data);
+        }
+
+        // --- Análisis de emociones ---
+        async function analyzeEmotion() {
+            const image_path = document.getElementById('emotion-image').value;
+            if (!image_path) return alert('Ingresa ruta de imagen');
+            const data = await callAPI('/api/emotion', 'POST', { image_path });
+            displayResult('emotion-result', data);
+        }
+
+        // --- Recomendaciones ---
+        async function getRecommendation() {
+            const type = document.getElementById('rec-type').value;
+            const genre = document.getElementById('rec-genre').value;
+            const data = await callAPI('/api/recommend', 'POST', { type, genre });
+            displayResult('rec-result', data);
+        }
+
+        // --- Calendario ---
+        async function calendarAction() {
+            const action = document.getElementById('cal-action').value;
+            const title = document.getElementById('cal-title').value;
+            const datetime = document.getElementById('cal-datetime').value;
+            const params = { action };
+            if (action === 'add' && title && datetime) {
+                params.title = title;
+                params.datetime = datetime;
+            }
+            const data = await callAPI('/api/calendar', 'POST', params);
+            displayResult('cal-result', data);
+        }
+
+        // --- IoT ---
+        async function iotControl() {
+            const device = document.getElementById('iot-device').value;
+            const action = document.getElementById('iot-action').value;
+            if (!device || !action) return alert('Completa dispositivo y acción');
+            const data = await callAPI('/api/iot', 'POST', { device, action });
+            displayResult('iot-result', data);
+        }
+
+        // Actualizar estado del sistema cada 10 segundos
+        setInterval(getSystemStatus, 10000);
+    </script>
+</body>
+</html>

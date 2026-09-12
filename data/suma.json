@@ -1,0 +1,10 @@
+{
+    "nombre": "suma",
+    "descripcion": "Calcula la suma de dos números.",
+    "parametros": {
+        "numero1": "El primer número a sumar.",
+        "numero2": "El segundo número a sumar."
+    },
+    "ejemplo": "suma({'numero1': 5, 'numero2': 3})",
+    "fecha_creacion": "2026-08-09T17:28:56.302354"
+}
